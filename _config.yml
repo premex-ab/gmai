@@ -1,0 +1,73 @@
+# Site settings
+title: "GMAI - Gradle Managed AI"
+description: "Manage local Ollama LLM instances in Gradle builds with task-dependent lifecycle management"
+baseurl: ""
+url: "https://premex-ab.github.io/gmai"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Plugin settings
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Navigation
+header_pages:
+  - index.md
+  - getting-started.md
+  - configuration.md
+  - advanced-features.md
+  - api-reference.md
+
+# Social links
+github_username: premex-ab
+company_name: Premex
+company_url: https://premex.se
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "page"
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/
+  - build/
+  - gradle/
+  - gradlew
+  - gradlew.bat
+  - settings.gradle.kts
+  - build.gradle.kts
+  - gradle.properties
+  - plugin/
+  - build-logic/
+  - test-project/
