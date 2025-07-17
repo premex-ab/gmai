@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [tart]
+    runs-on: [ubuntu-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: [tart]
+    runs-on: [ubuntu-latest]
     needs: build
     if: github.ref == 'refs/heads/main'
     steps:
