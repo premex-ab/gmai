@@ -2,7 +2,7 @@
 title: "GMAI - Gradle Managed AI"
 description: "Manage local Ollama LLM instances in Gradle builds with task-dependent lifecycle management"
 baseurl: ""
-url: "https://premex-ab.github.io/gmai"
+url: "https://gmai.premex.se"
 
 # Build settings
 markdown: kramdown
