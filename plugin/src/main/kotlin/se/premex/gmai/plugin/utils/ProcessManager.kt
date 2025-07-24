@@ -201,7 +201,8 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
             )
             OSUtils.OperatingSystem.WINDOWS -> listOf(
                 System.getenv("LOCALAPPDATA") + "\\Programs\\Ollama\\ollama.exe",
-                System.getenv("PROGRAMFILES") + "\\Ollama\\ollama.exe"
+                System.getenv("PROGRAMFILES") + "\\Ollama\\ollama.exe",
+                System.getenv("PROGRAMFILES(X86)") + "\\Ollama\\ollama.exe"
             )
         }
 
@@ -214,17 +215,11 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
      * Try to find Ollama in system PATH
      */
     private fun findOllamaInPath(): String? {
-        return try {
-            val process = ProcessBuilder("which", "ollama").start()
-            if (process.waitFor() == 0) {
-                process.inputStream.bufferedReader().readText().trim()
-            } else {
+        return OSUtils.findExecutableInPath("ollama")?.takeIf { it.isNotBlank() }
+            ?: run {
+                logger.debug("Could not find ollama in PATH")
                 null
             }
-        } catch (e: Exception) {
-            logger.debug("Could not find ollama in PATH: ${e.message}")
-            null
-        }
     }
 
     enum class OperatingSystem {

@@ -25,4 +25,26 @@ object OSUtils {
             OperatingSystem.LINUX -> "linux"
             OperatingSystem.WINDOWS -> "windows"
         }
+
+    /**
+     * Find an executable in system PATH using the appropriate command for the current OS.
+     * Uses 'where' on Windows and 'which' on Unix-like systems.
+     */
+    fun findExecutableInPath(executableName: String): String? {
+        return try {
+            val command = when (getOperatingSystem()) {
+                OperatingSystem.WINDOWS -> "where"
+                OperatingSystem.MACOS, OperatingSystem.LINUX -> "which"
+            }
+            
+            val process = ProcessBuilder(command, executableName).start()
+            if (process.waitFor() == 0) {
+                process.inputStream.bufferedReader().readText().trim()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 }
