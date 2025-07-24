@@ -175,7 +175,7 @@ class PreloadModelsTaskTest {
 
         // Verify the preloadModels task is in the ai group
         assertTrue(result.output.contains("preloadModels"), "preloadModels task should be listed in ai group")
-        assertTrue(result.output.contains("Preload models marked with preload = true during configuration phase"),
+        assertTrue(result.output.contains("Preload models marked with preload = true"),
                   "preloadModels should have correct description")
     }
 }

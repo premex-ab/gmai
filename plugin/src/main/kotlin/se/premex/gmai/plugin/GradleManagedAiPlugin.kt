@@ -3,21 +3,25 @@
  */
 package se.premex.gmai.plugin
 
-import org.gradle.api.Project
 import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import se.premex.gmai.plugin.extensions.ManagedAiExtension
-import se.premex.gmai.plugin.utils.OllamaInstaller
-import se.premex.gmai.plugin.utils.ProcessManager
-import se.premex.gmai.plugin.tasks.*
+import se.premex.gmai.plugin.services.OllamaLifecycleService
+import se.premex.gmai.plugin.tasks.OllamaStatusTask
+import se.premex.gmai.plugin.tasks.PullModelTask
+import se.premex.gmai.plugin.tasks.SetupManagedAiTask
+import se.premex.gmai.plugin.tasks.StartOllamaTask
+import se.premex.gmai.plugin.tasks.StopOllamaTask
+import se.premex.gmai.plugin.tasks.TeardownManagedAiTask
 
 /**
- * Gradle Managed AI Plugin - Phase 2 Implementation
+ * Gradle Managed AI Plugin
  *
- * Provides task-based lifecycle management for Ollama LLM instances in Gradle builds.
+ * Provides lifecycle management for Ollama LLM instances in Gradle builds.
  */
-class GradleManagedAiPlugin: Plugin<Project> {
+class GradleManagedAiPlugin : Plugin<Project> {
 
     private val logger: Logger = LoggerFactory.getLogger(GradleManagedAiPlugin::class.java)
 
@@ -34,20 +38,16 @@ class GradleManagedAiPlugin: Plugin<Project> {
     private fun configurePlugin(project: Project, extension: ManagedAiExtension) {
         logger.info("Configuring Gradle Managed AI Plugin...")
 
-        // Create services for lifecycle hooks - pass project to installer
-        val processManager = ProcessManager(logger)
-        val installer = OllamaInstaller(logger, project)
+        // Register all plugin tasks
+        registerTasks(project, extension)
 
-        // Register Phase 2 tasks
-        registerPhase2Tasks(project, extension)
-
-        // Set up lifecycle hooks
-        setupLifecycleHooks(project, extension, processManager, installer)
+        // Set up build services
+        setupBuildServices(project, extension)
 
         logger.info("Gradle Managed AI Plugin configured successfully")
     }
 
-    private fun registerPhase2Tasks(project: Project, extension: ManagedAiExtension) {
+    private fun registerTasks(project: Project, extension: ManagedAiExtension) {
         // Register core Ollama lifecycle tasks
         val startOllamaTask = project.tasks.register("startOllama", StartOllamaTask::class.java) { task ->
             task.host.set(extension.ollama.host)
@@ -106,10 +106,10 @@ class GradleManagedAiPlugin: Plugin<Project> {
             task.dependsOn(modelTasks)
         }
 
-        // Register preload task that runs during configuration
+        // Register preload task for models marked with preload = true
         project.tasks.register("preloadModels") { task ->
             task.group = "ai"
-            task.description = "Preload models marked with preload = true during configuration phase"
+            task.description = "Preload models marked with preload = true"
             task.dependsOn(startOllamaTask)
             task.dependsOn(preloadTasks)
         }
@@ -121,50 +121,33 @@ class GradleManagedAiPlugin: Plugin<Project> {
             task.dependsOn(stopOllamaTask)
         }
 
-        // Register the legacy status task for backward compatibility
-        project.tasks.register("managedAiStatus", OllamaStatusTask::class.java) { task ->
-            task.host.set(extension.ollama.host)
-            task.port.set(extension.ollama.port)
-            task.verbose.set(true)
-        }
-
-        logger.info("Phase 2 tasks registered successfully")
+        logger.info("Plugin tasks registered successfully")
     }
 
-    private fun setupLifecycleHooks(
-        project: Project,
-        extension: ManagedAiExtension,
-        processManager: ProcessManager,
-        installer: OllamaInstaller
-    ) {
-        // Auto-install if needed and enabled
-        if (extension.autoInstall && installer.findOllamaExecutable() == null) {
-            logger.info("Ollama not found, auto-install is enabled")
-            project.gradle.projectsEvaluated {
-                logger.info("Attempting to install Ollama...")
-                val result = installer.findOrInstallOllama(
-                    strategy = extension.ollama.installationStrategy,
-                    isolatedPath = extension.ollama.installPath
-                )
-                if (result.success) {
-                    logger.info("Ollama installed successfully: ${result.message}")
-                } else {
-                    logger.warn("Failed to install Ollama automatically: ${result.message}")
-                }
-            }
+    /**
+     * Set up build services to manage Ollama lifecycle across builds.
+     */
+    private fun setupBuildServices(project: Project, extension: ManagedAiExtension) {
+        // Register a build service for managing Ollama lifecycle
+        val ollamaServiceProvider = project.gradle.sharedServices.registerIfAbsent(
+            "ollamaLifecycleService",
+            OllamaLifecycleService::class.java
+        ) { spec ->
+            spec.parameters.autoInstall.set(extension.autoInstall)
+            spec.parameters.autoStart.set(extension.autoStart)
+            spec.parameters.host.set(extension.ollama.host)
+            spec.parameters.port.set(extension.ollama.port)
+            spec.parameters.installationStrategy.set(extension.ollama.installationStrategy)
+            extension.ollama.installPath?.let { spec.parameters.installPath.set(it) }
         }
 
-        // Set up cleanup on build completion
-        project.gradle.projectsEvaluated {
-            if (extension.autoStart) {
-                // Register cleanup task to run at the end
-                project.tasks.register("cleanupOllama") { task ->
-                    task.doLast {
-                        logger.info("Build finished, cleaning up Ollama process...")
-                        processManager.stopOllamaGracefully(30)
-                    }
-                }
-            }
+        // Configure tasks to use the build service
+        project.tasks.withType(StartOllamaTask::class.java).configureEach { task ->
+            task.usesService(ollamaServiceProvider)
+        }
+
+        project.tasks.withType(StopOllamaTask::class.java).configureEach { task ->
+            task.usesService(ollamaServiceProvider)
         }
     }
 }

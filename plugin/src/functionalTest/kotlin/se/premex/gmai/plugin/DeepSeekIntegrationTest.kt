@@ -7,12 +7,10 @@ import org.junit.jupiter.api.io.TempDir
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import se.premex.gmai.plugin.models.OllamaInstance
-import se.premex.gmai.plugin.services.ChatMessage
 import se.premex.gmai.plugin.services.OllamaService
 import java.io.File
 import java.time.Duration
 import java.util.concurrent.TimeUnit
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**

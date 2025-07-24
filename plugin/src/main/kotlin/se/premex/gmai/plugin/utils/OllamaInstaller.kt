@@ -9,6 +9,7 @@ import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
+import se.premex.gmai.plugin.utils.OSUtils.platformName
 
 class OllamaInstaller(
     private val logger: Logger = LoggerFactory.getLogger(OllamaInstaller::class.java),
@@ -155,18 +156,18 @@ class OllamaInstaller(
     }
 
     private fun isSystemWideInstallation(path: String): Boolean {
-        val systemWidePaths = when (getOperatingSystem()) {
-            OperatingSystem.MACOS -> listOf(
+        val systemWidePaths = when (OSUtils.getOperatingSystem()) {
+            OSUtils.OperatingSystem.MACOS -> listOf(
                 "/usr/local/bin/",
                 "/opt/homebrew/bin/",
                 "/usr/bin/"
             )
-            OperatingSystem.LINUX -> listOf(
+            OSUtils.OperatingSystem.LINUX -> listOf(
                 "/usr/local/bin/",
                 "/usr/bin/",
                 "/bin/"
             )
-            OperatingSystem.WINDOWS -> listOf(
+            OSUtils.OperatingSystem.WINDOWS -> listOf(
                 "C:\\Program Files\\",
                 "C:\\Program Files (x86)\\"
             )
@@ -180,7 +181,7 @@ class OllamaInstaller(
     private fun installIsolated(isolatedPath: String?): InstallationResult {
         return try {
             val targetPath = isolatedPath ?: getDefaultIsolatedPath()
-            val success = downloadAndInstallDirect(getOperatingSystem().platformName, targetPath)
+            val success = downloadAndInstallDirect(OSUtils.getOperatingSystem().platformName, targetPath)
 
             if (success) {
                 InstallationResult(
@@ -209,10 +210,10 @@ class OllamaInstaller(
 
     private fun installSystemWide(): InstallationResult {
         return try {
-            val success = when (getOperatingSystem()) {
-                OperatingSystem.MACOS -> installSystemWideOnMacOS()
-                OperatingSystem.LINUX -> installSystemWideOnLinux()
-                OperatingSystem.WINDOWS -> installSystemWideOnWindows()
+            val success = when (OSUtils.getOperatingSystem()) {
+                OSUtils.OperatingSystem.MACOS -> installSystemWideOnMacOS()
+                OSUtils.OperatingSystem.LINUX -> installSystemWideOnLinux()
+                OSUtils.OperatingSystem.WINDOWS -> installSystemWideOnWindows()
             }
 
             if (success) {
@@ -290,16 +291,16 @@ class OllamaInstaller(
     }
 
     private fun getDefaultIsolatedPath(): String {
-        return when (getOperatingSystem()) {
-            OperatingSystem.MACOS -> ".ollama/bin/ollama"
-            OperatingSystem.LINUX -> ".ollama/bin/ollama"
-            OperatingSystem.WINDOWS -> ".ollama\\bin\\ollama.exe"
+        return when (OSUtils.getOperatingSystem()) {
+            OSUtils.OperatingSystem.MACOS -> ".ollama/bin/ollama"
+            OSUtils.OperatingSystem.LINUX -> ".ollama/bin/ollama"
+            OSUtils.OperatingSystem.WINDOWS -> ".ollama\\bin\\ollama.exe"
         }
     }
 
     fun findOllamaExecutable(): String? {
-        val possiblePaths = when (getOperatingSystem()) {
-            OperatingSystem.MACOS -> listOf(
+        val possiblePaths = when (OSUtils.getOperatingSystem()) {
+            OSUtils.OperatingSystem.MACOS -> listOf(
                 // Check project directory first (isolated installation)
                 ".ollama/bin/ollama",
                 // Then check system-wide locations
@@ -307,7 +308,7 @@ class OllamaInstaller(
                 "/opt/homebrew/bin/ollama",
                 System.getProperty("user.home") + "/.ollama/bin/ollama"
             )
-            OperatingSystem.LINUX -> listOf(
+            OSUtils.OperatingSystem.LINUX -> listOf(
                 // Check project directory first (isolated installation)
                 ".ollama/bin/ollama",
                 // Then check system-wide locations
@@ -315,7 +316,7 @@ class OllamaInstaller(
                 "/usr/bin/ollama",
                 System.getProperty("user.home") + "/.local/bin/ollama"
             )
-            OperatingSystem.WINDOWS -> listOf(
+            OSUtils.OperatingSystem.WINDOWS -> listOf(
                 // Check project directory first (isolated installation)
                 ".ollama\\bin\\ollama.exe",
                 // Then check system-wide locations
@@ -455,7 +456,7 @@ class OllamaInstaller(
 
     private fun findOllamaExecutableInDir(dir: File): File? {
         // Look for the ollama executable in the extracted directory
-        val executableName = if (getOperatingSystem() == OperatingSystem.WINDOWS) "ollama.exe" else "ollama"
+        val executableName = if (OSUtils.getOperatingSystem() == OSUtils.OperatingSystem.WINDOWS) "ollama.exe" else "ollama"
 
         return dir.walkTopDown()
             .firstOrNull { file ->
@@ -543,25 +544,4 @@ class OllamaInstaller(
             else -> throw IllegalArgumentException("Unsupported platform: $platform")
         }
     }
-
-    private fun getOperatingSystem(): OperatingSystem {
-        val os = System.getProperty("os.name").lowercase()
-        return when {
-            os.contains("mac") -> OperatingSystem.MACOS
-            os.contains("linux") -> OperatingSystem.LINUX
-            os.contains("windows") -> OperatingSystem.WINDOWS
-            else -> throw UnsupportedOperationException("Unsupported operating system: $os")
-        }
-    }
-
-    enum class OperatingSystem {
-        MACOS, LINUX, WINDOWS
-    }
-
-    private val OperatingSystem.platformName: String
-        get() = when (this) {
-            OperatingSystem.MACOS -> "darwin"
-            OperatingSystem.LINUX -> "linux"
-            OperatingSystem.WINDOWS -> "windows"
-        }
 }
