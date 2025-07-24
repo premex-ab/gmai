@@ -50,15 +50,15 @@ abstract class OllamaStatusTask : DefaultTask() {
         val isProcessRunning = processManager.isOllamaRunning(port.get())
         val isServiceHealthy = runBlocking { service.isHealthy() }
 
-        // Use project.logger for consistent logging approach
-        project.logger.lifecycle("Ollama Status:")
-        project.logger.lifecycle("  Process Running: $isProcessRunning")
-        project.logger.lifecycle("  Service Healthy: $isServiceHealthy")
-        project.logger.lifecycle("  Endpoint: http://${host.get()}:${port.get()}")
+        // Use println for output instead of project.logger.lifecycle for configuration cache compatibility
+        println("Ollama Status:")
+        println("  Process Running: $isProcessRunning")
+        println("  Service Healthy: $isServiceHealthy")
+        println("  Endpoint: http://${host.get()}:${port.get()}")
 
         if (verbose.get()) {
-            project.logger.info("Detailed status check completed for Ollama at ${host.get()}:${port.get()}")
-            project.logger.info("Process running: $isProcessRunning, Service healthy: $isServiceHealthy")
+            logger.info("Detailed status check completed for Ollama at ${host.get()}:${port.get()}")
+            logger.info("Process running: $isProcessRunning, Service healthy: $isServiceHealthy")
         }
     }
 }

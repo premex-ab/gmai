@@ -83,7 +83,7 @@ abstract class StartOllamaTask : DefaultTask() {
                     return // Service already running, nothing to do
                 }
                 PortManager.PortResolution.Status.ALTERNATIVE_FOUND -> {
-                    project.logger.lifecycle("Port ${port.get()} is in use, using alternative port ${portResolution.port}")
+                    println("Port ${port.get()} is in use, using alternative port ${portResolution.port}")
                     portResolution.port
                 }
                 PortManager.PortResolution.Status.CONFLICT -> {
@@ -146,9 +146,9 @@ abstract class StartOllamaTask : DefaultTask() {
                     throw GradleException("Ollama service failed to become ready within 30 seconds")
                 }
 
-                project.logger.lifecycle("Ollama service started successfully on ${host.get()}:$actualPort")
+                println("Ollama service started successfully on ${host.get()}:$actualPort")
             } else {
-                project.logger.lifecycle("Ollama service is already running on ${host.get()}:$actualPort")
+                println("Ollama service is already running on ${host.get()}:$actualPort")
             }
 
         } catch (e: Exception) {
