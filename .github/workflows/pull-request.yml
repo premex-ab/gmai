@@ -11,7 +11,12 @@ concurrency:
 
 jobs:
   test:
-    runs-on: [tart]
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
     permissions:
       contents: read
       pull-requests: write
@@ -28,30 +33,35 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-home-cache-cleanup: true
 
       - name: Run full plugin check
-        run: ./gradlew :plugin:check
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # On Windows, use cmd to avoid batch file termination prompts
+            ./gradlew.bat :plugin:check --no-daemon --console=plain
+          else
+            ./gradlew :plugin:check
+          fi
 
       - name: Build plugin
-        run: ./gradlew :plugin:build
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # On Windows, use cmd to avoid batch file termination prompts
+            ./gradlew.bat :plugin:build --no-daemon --console=plain
+          else
+            ./gradlew :plugin:build
+          fi
 
-      - name: Upload test results
+      - name: Upload reports
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
-          name: test-results
+          name: test-results-${{ matrix.os }}
           path: |
-            plugin/build/reports/tests/
-            plugin/build/test-results/
-
-      - name: Upload build reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: build-reports
-          path: |
-            plugin/build/reports/
-            build/reports/
+            **/build/reports/tests/*
+            **/build/test-results/*

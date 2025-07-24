@@ -116,21 +116,39 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
     fun isOllamaRunning(port: Int = 11434): Boolean {
         return try {
             // Check if process is listening on the specific port
-            val process = when (OSUtils.getOperatingSystem()) {
+            when (OSUtils.getOperatingSystem()) {
                 OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
-                    ProcessBuilder("lsof", "-i", ":$port").start()
+                    val process = ProcessBuilder("lsof", "-i", ":$port").start()
+                    process.waitFor() == 0
                 }
                 OSUtils.OperatingSystem.WINDOWS -> {
-                    ProcessBuilder("netstat", "-an").start()
+                    val process = ProcessBuilder("netstat", "-an").start()
+                    if (process.waitFor() == 0) {
+                        val output = process.inputStream.bufferedReader().readText()
+                        output.contains(":$port")
+                    } else {
+                        false
+                    }
                 }
             }
-
-            process.waitFor() == 0
         } catch (e: Exception) {
             // Fallback to generic process check
             try {
-                val process = ProcessBuilder("pgrep", "-f", "ollama.*serve").start()
-                process.waitFor() == 0
+                when (OSUtils.getOperatingSystem()) {
+                    OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
+                        val process = ProcessBuilder("pgrep", "-f", "ollama.*serve").start()
+                        process.waitFor() == 0
+                    }
+                    OSUtils.OperatingSystem.WINDOWS -> {
+                        val process = ProcessBuilder("tasklist", "/FI", "IMAGENAME eq ollama.exe").start()
+                        if (process.waitFor() == 0) {
+                            val output = process.inputStream.bufferedReader().readText()
+                            output.contains("ollama.exe")
+                        } else {
+                            false
+                        }
+                    }
+                }
             } catch (e2: Exception) {
                 false
             }
