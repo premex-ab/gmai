@@ -69,22 +69,6 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
         }
     }
 
-    fun startOllamaIsolated(
-        executablePath: String,
-        isolatedPath: String,
-        host: String = "localhost",
-        port: Int = 11434,
-        additionalArgs: List<String> = emptyList()
-    ): Boolean {
-        return startOllama(
-            executablePath = executablePath,
-            host = host,
-            port = port,
-            additionalArgs = additionalArgs,
-            isolatedPath = isolatedPath
-        )
-    }
-
     fun stopOllama(): Boolean {
         return try {
             ollamaProcess?.let { process ->
@@ -132,11 +116,11 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
     fun isOllamaRunning(port: Int = 11434): Boolean {
         return try {
             // Check if process is listening on the specific port
-            val process = when (getOperatingSystem()) {
-                OperatingSystem.MACOS, OperatingSystem.LINUX -> {
+            val process = when (OSUtils.getOperatingSystem()) {
+                OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
                     ProcessBuilder("lsof", "-i", ":$port").start()
                 }
-                OperatingSystem.WINDOWS -> {
+                OSUtils.OperatingSystem.WINDOWS -> {
                     ProcessBuilder("netstat", "-an").start()
                 }
             }
@@ -155,11 +139,11 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
 
     private fun killExistingOllamaProcesses(): Boolean {
         return try {
-            val process = when (getOperatingSystem()) {
-                OperatingSystem.MACOS, OperatingSystem.LINUX -> {
+            val process = when (OSUtils.getOperatingSystem()) {
+                OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
                     ProcessBuilder("pkill", "-f", "ollama.*serve").start()
                 }
-                OperatingSystem.WINDOWS -> {
+                OSUtils.OperatingSystem.WINDOWS -> {
                     ProcessBuilder("taskkill", "/F", "/IM", "ollama.exe").start()
                 }
             }
@@ -171,13 +155,75 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
         }
     }
 
-    private fun getOperatingSystem(): OperatingSystem {
-        val os = System.getProperty("os.name").lowercase()
-        return when {
-            os.contains("mac") -> OperatingSystem.MACOS
-            os.contains("linux") -> OperatingSystem.LINUX
-            os.contains("windows") -> OperatingSystem.WINDOWS
-            else -> throw UnsupportedOperationException("Unsupported operating system: $os")
+    /**
+     * Simplified start method for configuration cache compatibility.
+     * This method tries to find an existing Ollama executable and start it without project dependencies.
+     */
+    fun startOllamaSimple(
+        host: String = "localhost",
+        port: Int = 11434,
+        additionalArgs: List<String> = emptyList()
+    ): Boolean {
+        if (isOllamaRunning(port)) {
+            logger.info("Ollama is already running on port $port")
+            return true
+        }
+
+        // Try to find ollama executable in common locations
+        val executablePath = findOllamaExecutable()
+        if (executablePath == null) {
+            logger.error("Ollama executable not found. Please install Ollama first.")
+            return false
+        }
+
+        return startOllama(
+            executablePath = executablePath,
+            host = host,
+            port = port,
+            additionalArgs = additionalArgs
+        )
+    }
+
+    /**
+     * Find Ollama executable in common system locations
+     */
+    private fun findOllamaExecutable(): String? {
+        val possiblePaths = when (OSUtils.getOperatingSystem()) {
+            OSUtils.OperatingSystem.MACOS -> listOf(
+                "/usr/local/bin/ollama",
+                "/opt/homebrew/bin/ollama",
+                System.getProperty("user.home") + "/.local/bin/ollama"
+            )
+            OSUtils.OperatingSystem.LINUX -> listOf(
+                "/usr/local/bin/ollama",
+                "/usr/bin/ollama",
+                System.getProperty("user.home") + "/.local/bin/ollama"
+            )
+            OSUtils.OperatingSystem.WINDOWS -> listOf(
+                System.getenv("LOCALAPPDATA") + "\\Programs\\Ollama\\ollama.exe",
+                System.getenv("PROGRAMFILES") + "\\Ollama\\ollama.exe"
+            )
+        }
+
+        return possiblePaths.firstOrNull { path ->
+            File(path).let { it.exists() && it.canExecute() }
+        } ?: findOllamaInPath()
+    }
+
+    /**
+     * Try to find Ollama in system PATH
+     */
+    private fun findOllamaInPath(): String? {
+        return try {
+            val process = ProcessBuilder("which", "ollama").start()
+            if (process.waitFor() == 0) {
+                process.inputStream.bufferedReader().readText().trim()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            logger.debug("Could not find ollama in PATH: ${e.message}")
+            null
         }
     }
 

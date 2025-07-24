@@ -64,7 +64,7 @@ class GradleManagedAiPluginFunctionalTest {
         val runner = GradleRunner.create()
         runner.forwardOutput()
         runner.withPluginClasspath()
-        runner.withArguments("managedAiStatus")
+        runner.withArguments("ollamaStatus")
         runner.withProjectDir(projectDir)
         val result = runner.build()
 

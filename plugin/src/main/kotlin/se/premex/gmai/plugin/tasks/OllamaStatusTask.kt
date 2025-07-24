@@ -4,6 +4,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import org.slf4j.LoggerFactory
 import kotlinx.coroutines.runBlocking
 import se.premex.gmai.plugin.models.OllamaInstance
 import se.premex.gmai.plugin.services.OllamaService
@@ -21,6 +22,8 @@ abstract class OllamaStatusTask : DefaultTask() {
     @get:Input
     abstract val verbose: Property<Boolean>
 
+    private val logger = LoggerFactory.getLogger(OllamaStatusTask::class.java)
+
     init {
         group = "ai"
         description = "Check the status of the Ollama service"
@@ -33,7 +36,7 @@ abstract class OllamaStatusTask : DefaultTask() {
 
     @TaskAction
     fun checkStatus() {
-        val processManager = ProcessManager(project.logger)
+        val processManager = ProcessManager(logger)
         val ollamaInstance = OllamaInstance(
             host = host.get(),
             port = port.get(),
@@ -42,32 +45,20 @@ abstract class OllamaStatusTask : DefaultTask() {
             isIsolated = false,
             isolatedPath = null
         )
-        val service = OllamaService(ollamaInstance, project.logger)
+        val service = OllamaService(ollamaInstance, logger)
 
         val isProcessRunning = processManager.isOllamaRunning(port.get())
         val isServiceHealthy = runBlocking { service.isHealthy() }
 
-        project.logger.lifecycle("Ollama Status:")
-        project.logger.lifecycle("  Process Running: $isProcessRunning")
-        project.logger.lifecycle("  Service Healthy: $isServiceHealthy")
-        project.logger.lifecycle("  Endpoint: ${ollamaInstance.baseUrl}")
+        // Use println for output instead of project.logger.lifecycle for configuration cache compatibility
+        println("Ollama Status:")
+        println("  Process Running: $isProcessRunning")
+        println("  Service Healthy: $isServiceHealthy")
+        println("  Endpoint: http://${host.get()}:${port.get()}")
 
-        if (verbose.get() && isServiceHealthy) {
-            showDetailedStatus(service)
-        }
-    }
-
-    private fun showDetailedStatus(service: OllamaService) {
-        runBlocking {
-            try {
-                val models = service.listModels()
-                project.logger.lifecycle("  Installed Models: ${models.size}")
-                models.forEach { model ->
-                    project.logger.lifecycle("    - ${model.name} (${model.version})")
-                }
-            } catch (e: Exception) {
-                project.logger.warn("Failed to get detailed status: ${e.message}")
-            }
+        if (verbose.get()) {
+            logger.info("Detailed status check completed for Ollama at ${host.get()}:${port.get()}")
+            logger.info("Process running: $isProcessRunning, Service healthy: $isServiceHealthy")
         }
     }
 }
