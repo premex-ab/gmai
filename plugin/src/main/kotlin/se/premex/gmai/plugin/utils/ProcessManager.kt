@@ -119,14 +119,17 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
             when (OSUtils.getOperatingSystem()) {
                 OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
                     val process = ProcessBuilder("lsof", "-i", ":$port").start()
-                    process.waitFor() == 0
+                    val finished = process.waitFor(5, TimeUnit.SECONDS)
+                    finished && process.exitValue() == 0
                 }
                 OSUtils.OperatingSystem.WINDOWS -> {
-                    val process = ProcessBuilder("netstat", "-an").start()
-                    if (process.waitFor() == 0) {
+                    val process = ProcessBuilder("cmd.exe", "/c", "netstat", "-an").start()
+                    val finished = process.waitFor(5, TimeUnit.SECONDS)
+                    if (finished && process.exitValue() == 0) {
                         val output = process.inputStream.bufferedReader().readText()
                         output.contains(":$port")
                     } else {
+                        if (!finished) process.destroyForcibly()
                         false
                     }
                 }
@@ -137,14 +140,17 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
                 when (OSUtils.getOperatingSystem()) {
                     OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
                         val process = ProcessBuilder("pgrep", "-f", "ollama.*serve").start()
-                        process.waitFor() == 0
+                        val finished = process.waitFor(5, TimeUnit.SECONDS)
+                        finished && process.exitValue() == 0
                     }
                     OSUtils.OperatingSystem.WINDOWS -> {
-                        val process = ProcessBuilder("tasklist", "/FI", "IMAGENAME eq ollama.exe").start()
-                        if (process.waitFor() == 0) {
+                        val process = ProcessBuilder("cmd.exe", "/c", "tasklist", "/FI", "IMAGENAME eq ollama.exe").start()
+                        val finished = process.waitFor(5, TimeUnit.SECONDS)
+                        if (finished && process.exitValue() == 0) {
                             val output = process.inputStream.bufferedReader().readText()
                             output.contains("ollama.exe")
                         } else {
+                            if (!finished) process.destroyForcibly()
                             false
                         }
                     }
@@ -162,11 +168,17 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
                     ProcessBuilder("pkill", "-f", "ollama.*serve").start()
                 }
                 OSUtils.OperatingSystem.WINDOWS -> {
-                    ProcessBuilder("taskkill", "/F", "/IM", "ollama.exe").start()
+                    ProcessBuilder("cmd.exe", "/c", "taskkill", "/F", "/IM", "ollama.exe").start()
                 }
             }
 
-            process.waitFor() == 0
+            val finished = process.waitFor(10, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                false
+            } else {
+                process.exitValue() == 0
+            }
         } catch (e: Exception) {
             logger.error("Failed to kill existing Ollama processes", e)
             false

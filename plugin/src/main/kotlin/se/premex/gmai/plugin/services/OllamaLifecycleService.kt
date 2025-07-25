@@ -8,6 +8,7 @@ import se.premex.gmai.plugin.models.OllamaInstallationStrategy
 import se.premex.gmai.plugin.utils.OllamaInstaller
 import se.premex.gmai.plugin.utils.ProcessManager
 import java.io.Serializable
+import java.util.concurrent.TimeUnit
 
 /**
  * Configuration cache compatible build service for managing Ollama lifecycle.
@@ -165,18 +166,22 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
                 when {
                     os.contains("mac") -> {
                         val process = ProcessBuilder("brew", "install", "ollama").start()
-                        if (process.waitFor() == 0) {
+                        val finished = process.waitFor(300, TimeUnit.SECONDS)
+                        if (finished && process.exitValue() == 0) {
                             InstallResult(true, "Installed via Homebrew")
                         } else {
+                            if (!finished) process.destroyForcibly()
                             InstallResult(false, "Homebrew installation failed")
                         }
                     }
                     os.contains("linux") -> {
                         // Try curl install script
                         val process = ProcessBuilder("bash", "-c", "curl -fsSL https://ollama.com/install.sh | sh").start()
-                        if (process.waitFor() == 0) {
+                        val finished = process.waitFor(300, TimeUnit.SECONDS)
+                        if (finished && process.exitValue() == 0) {
                             InstallResult(true, "Installed via curl script")
                         } else {
+                            if (!finished) process.destroyForcibly()
                             InstallResult(false, "Curl installation failed")
                         }
                     }
