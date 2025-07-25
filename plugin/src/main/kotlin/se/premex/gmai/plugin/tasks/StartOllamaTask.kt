@@ -8,7 +8,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.CacheableTask
-import org.slf4j.LoggerFactory
 import kotlinx.coroutines.runBlocking
 import se.premex.gmai.plugin.models.OllamaInstance
 import se.premex.gmai.plugin.models.OllamaInstallationStrategy
@@ -43,8 +42,6 @@ abstract class StartOllamaTask : DefaultTask() {
     @get:Input
     @get:Optional
     abstract val installationStrategy: Property<OllamaInstallationStrategy>
-
-    private val logger = LoggerFactory.getLogger(StartOllamaTask::class.java)
 
     init {
         group = "ai"
@@ -83,7 +80,7 @@ abstract class StartOllamaTask : DefaultTask() {
                     return // Service already running, nothing to do
                 }
                 PortManager.PortResolution.Status.ALTERNATIVE_FOUND -> {
-                    println("Port ${port.get()} is in use, using alternative port ${portResolution.port}")
+                    logger.lifecycle("Port ${port.get()} is in use, using alternative port ${portResolution.port}")
                     portResolution.port
                 }
                 PortManager.PortResolution.Status.CONFLICT -> {
@@ -146,9 +143,9 @@ abstract class StartOllamaTask : DefaultTask() {
                     throw GradleException("Ollama service failed to become ready within 30 seconds")
                 }
 
-                println("Ollama service started successfully on ${host.get()}:$actualPort")
+                logger.lifecycle("Ollama service started successfully on ${host.get()}:$actualPort")
             } else {
-                println("Ollama service is already running on ${host.get()}:$actualPort")
+                logger.lifecycle("Ollama service is already running on ${host.get()}:$actualPort")
             }
 
         } catch (e: Exception) {

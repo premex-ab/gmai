@@ -4,7 +4,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
-import org.slf4j.LoggerFactory
 import kotlinx.coroutines.runBlocking
 import se.premex.gmai.plugin.models.OllamaInstance
 import se.premex.gmai.plugin.services.OllamaService
@@ -21,8 +20,6 @@ abstract class OllamaStatusTask : DefaultTask() {
 
     @get:Input
     abstract val verbose: Property<Boolean>
-
-    private val logger = LoggerFactory.getLogger(OllamaStatusTask::class.java)
 
     init {
         group = "ai"
@@ -50,11 +47,11 @@ abstract class OllamaStatusTask : DefaultTask() {
         val isProcessRunning = processManager.isOllamaRunning(port.get())
         val isServiceHealthy = runBlocking { service.isHealthy() }
 
-        // Use println for output instead of project.logger.lifecycle for configuration cache compatibility
-        println("Ollama Status:")
-        println("  Process Running: $isProcessRunning")
-        println("  Service Healthy: $isServiceHealthy")
-        println("  Endpoint: http://${host.get()}:${port.get()}")
+        // Use task.logger for configuration cache compatibility
+        logger.lifecycle("Ollama Status:")
+        logger.lifecycle("  Process Running: $isProcessRunning")
+        logger.lifecycle("  Service Healthy: $isServiceHealthy")
+        logger.lifecycle("  Endpoint: http://${host.get()}:${port.get()}")
 
         if (verbose.get()) {
             logger.info("Detailed status check completed for Ollama at ${host.get()}:${port.get()}")

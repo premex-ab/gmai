@@ -30,10 +30,10 @@ abstract class TeardownManagedAiTask : DefaultTask() {
 
     @TaskAction
     fun teardownManagedAi() {
-        project.logger.lifecycle("Tearing down managed AI environment...")
+        logger.lifecycle("Tearing down managed AI environment...")
 
         // This task will depend on stopOllama task
         // The actual work is done by the dependent tasks
-        project.logger.lifecycle("Managed AI environment teardown complete")
+        logger.lifecycle("Managed AI environment teardown complete")
     }
 }

@@ -30,10 +30,10 @@ abstract class SetupManagedAiTask : DefaultTask() {
 
     @TaskAction
     fun setupManagedAi() {
-        project.logger.lifecycle("Setting up managed AI environment...")
+        logger.lifecycle("Setting up managed AI environment...")
 
         // This task will depend on startOllama and pullModel tasks
         // The actual work is done by the dependent tasks
-        project.logger.lifecycle("Managed AI environment setup complete")
+        logger.lifecycle("Managed AI environment setup complete")
     }
 }

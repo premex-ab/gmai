@@ -31,14 +31,14 @@ abstract class StopOllamaTask : DefaultTask() {
 
     @TaskAction
     fun stopOllama() {
-        val processManager = ProcessManager(project.logger)
+        val processManager = ProcessManager(logger)
 
         if (!processManager.isOllamaRunning(port.get())) {
-            project.logger.info("Ollama is not running")
+            logger.info("Ollama is not running")
             return
         }
 
-        project.logger.info("Stopping Ollama...")
+        logger.info("Stopping Ollama...")
 
         val success = if (gracefulShutdown.get()) {
             processManager.stopOllamaGracefully(timeoutSeconds.get())
@@ -47,9 +47,9 @@ abstract class StopOllamaTask : DefaultTask() {
         }
 
         if (success) {
-            project.logger.lifecycle("Ollama stopped successfully")
+            logger.lifecycle("Ollama stopped successfully")
         } else {
-            project.logger.warn("Failed to stop Ollama cleanly")
+            logger.warn("Failed to stop Ollama cleanly")
         }
     }
 }
