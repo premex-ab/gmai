@@ -16,7 +16,7 @@ fun Task.useManagedAi() {
         try {
             project.tasks.named("setupManagedAi")
         } catch (e: Exception) {
-            project.logger.error("setupManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied", e)
+            logger.error("setupManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied", e)
             null
         }
     })
@@ -25,7 +25,7 @@ fun Task.useManagedAi() {
         try {
             project.tasks.named("teardownManagedAi")
         } catch (e: Exception) {
-            project.logger.error("teardownManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied", e)
+            logger.error("teardownManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied", e)
             null
         }
     })
@@ -43,7 +43,7 @@ fun Task.useManagedAi(configure: ManagedAiTaskConfiguration.() -> Unit) {
         try {
             project.tasks.named("setupManagedAi")
         } catch (e: Exception) {
-            project.logger.warn("setupManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied")
+            logger.warn("setupManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied")
             null
         }
     })
@@ -53,7 +53,7 @@ fun Task.useManagedAi(configure: ManagedAiTaskConfiguration.() -> Unit) {
             try {
                 project.tasks.named("teardownManagedAi")
             } catch (e: Exception) {
-                project.logger.warn("teardownManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied")
+                logger.warn("teardownManagedAi task not found for task ${name} - make sure the Gradle Managed AI plugin is applied")
                 null
             }
         })

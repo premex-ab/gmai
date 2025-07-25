@@ -55,7 +55,7 @@ abstract class PullModelTask : DefaultTask() {
 
     @TaskAction
     fun pullModel() {
-        val errorHandler = ErrorHandler(project.logger)
+        val errorHandler = ErrorHandler(logger)
 
         // Use actual port if available from StartOllamaTask
         val actualPort = project.extensions.extraProperties.get("ollama.actualPort") as? Int ?: port.get()
@@ -68,47 +68,47 @@ abstract class PullModelTask : DefaultTask() {
             isIsolated = false,
             isolatedPath = null
         )
-        val service = OllamaService(ollamaInstance, project.logger)
+        val service = OllamaService(ollamaInstance, logger)
 
         val fullModelName = "${modelName.get()}:${modelVersion.get()}"
 
-        project.logger.lifecycle("Checking for model: $fullModelName")
+        logger.lifecycle("Checking for model: $fullModelName")
 
         runBlocking {
             try {
                 // Check if model already exists
                 val existingModels = service.listModels()
                 if (existingModels.any { it.name == fullModelName }) {
-                    project.logger.lifecycle("Model $fullModelName already exists, skipping pull")
+                    logger.lifecycle("Model $fullModelName already exists, skipping pull")
                     createOutputMarker()
                     return@runBlocking
                 }
 
                 // Pull the model with progress tracking
-                project.logger.lifecycle("Downloading model $fullModelName (this may take several minutes)...")
-                project.logger.lifecycle("Progress: Starting download...")
+                logger.lifecycle("Downloading model $fullModelName (this may take several minutes)...")
+                logger.lifecycle("Progress: Starting download...")
 
                 val success = service.pullModelWithProgress(fullModelName) { progress ->
                     when (progress.status) {
                         "pulling" -> {
                             if (progress.total != null && progress.completed != null) {
                                 val percentage = (progress.completed.toDouble() / progress.total.toDouble() * 100).toInt()
-                                project.logger.lifecycle("Progress: $percentage% (${progress.completed}/${progress.total} bytes)")
+                                logger.lifecycle("Progress: $percentage% (${progress.completed}/${progress.total} bytes)")
                             } else {
-                                project.logger.lifecycle("Progress: Downloading...")
+                                logger.lifecycle("Progress: Downloading...")
                             }
                         }
-                        "downloading" -> project.logger.lifecycle("Progress: Downloading model data...")
-                        "verifying sha256" -> project.logger.lifecycle("Progress: Verifying download...")
-                        "writing manifest" -> project.logger.lifecycle("Progress: Writing manifest...")
-                        "removing any unused layers" -> project.logger.lifecycle("Progress: Cleaning up...")
-                        "success" -> project.logger.lifecycle("Progress: Download completed successfully!")
-                        else -> project.logger.lifecycle("Progress: ${progress.status}")
+                        "downloading" -> logger.lifecycle("Progress: Downloading model data...")
+                        "verifying sha256" -> logger.lifecycle("Progress: Verifying download...")
+                        "writing manifest" -> logger.lifecycle("Progress: Writing manifest...")
+                        "removing any unused layers" -> logger.lifecycle("Progress: Cleaning up...")
+                        "success" -> logger.lifecycle("Progress: Download completed successfully!")
+                        else -> logger.lifecycle("Progress: ${progress.status}")
                     }
                 }
 
                 if (success) {
-                    project.logger.lifecycle("Successfully pulled model: $fullModelName")
+                    logger.lifecycle("Successfully pulled model: $fullModelName")
                     createOutputMarker()
                 } else {
                     throw GradleException("Failed to pull model: $fullModelName")
