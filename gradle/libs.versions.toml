@@ -25,5 +25,5 @@ kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref 
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.1.20" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.2.0" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.2.0" }
