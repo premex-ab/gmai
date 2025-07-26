@@ -23,6 +23,7 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
         val port: Property<Int>
         val installationStrategy: Property<OllamaInstallationStrategy>
         val installPath: Property<String>
+        val version: Property<String>
     }
 
     private val logger = LoggerFactory.getLogger(OllamaLifecycleService::class.java)
@@ -52,7 +53,8 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
         logger.info("Ollama not found, attempting auto-install...")
         val result = installer.findOrInstallOllama(
             strategy = parameters.installationStrategy.getOrElse(OllamaInstallationStrategy.PREFER_EXISTING),
-            isolatedPath = parameters.installPath.orNull
+            isolatedPath = parameters.installPath.orNull,
+            version = parameters.version.get()
         )
 
         if (result.success) {
@@ -134,7 +136,7 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
                 }
         }
 
-        fun findOrInstallOllama(strategy: OllamaInstallationStrategy, isolatedPath: String?): InstallResult {
+        fun findOrInstallOllama(strategy: OllamaInstallationStrategy, isolatedPath: String?, version: String): InstallResult {
             val existing = findOllamaExecutable()
             if (existing != null) {
                 return InstallResult(true, "Ollama already installed at: $existing")
@@ -143,19 +145,19 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
             return when (strategy) {
                 OllamaInstallationStrategy.PREFER_EXISTING -> {
                     // Already checked for existing above, so try isolated download
-                    installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama")
+                    installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama", version)
                 }
                 OllamaInstallationStrategy.PREFER_EXISTING_THEN_SYSTEM_WIDE -> {
                     // Try system package manager first, then isolated
                     val systemResult = installViaPackageManager()
-                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath)
+                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath, version)
                 }
-                OllamaInstallationStrategy.ISOLATED_ONLY -> installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama")
+                OllamaInstallationStrategy.ISOLATED_ONLY -> installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama", version)
                 OllamaInstallationStrategy.SYSTEM_WIDE_ONLY -> installViaPackageManager()
                 OllamaInstallationStrategy.FULL_PRIORITY -> {
                     // Try system package manager, then isolated download
                     val systemResult = installViaPackageManager()
-                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath)
+                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath, version)
                 }
             }
         }
@@ -192,7 +194,7 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
             }
         }
 
-        private fun installViaBinaryDownload(targetPath: String?): InstallResult {
+        private fun installViaBinaryDownload(targetPath: String?, version: String): InstallResult {
             return try {
                 val os = se.premex.gmai.plugin.utils.OSUtils.getOperatingSystem()
                 val installPath = targetPath ?: getDefaultInstallPath(os)
@@ -204,7 +206,7 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
                 targetFile.parentFile?.mkdirs()
                 
                 // Get platform-specific download URL
-                val downloadUrl = getDownloadUrl(os)
+                val downloadUrl = getDownloadUrl(os, version)
                 logger.info("Downloading Ollama from: $downloadUrl")
                 
                 // Download and extract
@@ -232,9 +234,7 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
             }
         }
         
-        private fun getDownloadUrl(os: se.premex.gmai.plugin.utils.OSUtils.OperatingSystem): String {
-            // Use the latest stable version
-            val version = "v0.9.6"
+        private fun getDownloadUrl(os: se.premex.gmai.plugin.utils.OSUtils.OperatingSystem, version: String): String {
             return when (os) {
                 se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.MACOS -> 
                     "https://github.com/ollama/ollama/releases/download/$version/ollama-darwin.tgz"

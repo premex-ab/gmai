@@ -175,8 +175,7 @@ class OllamaLifecycleServiceInstallTest {
     private class TestableOllamaLifecycleService {
         private val logger = org.slf4j.LoggerFactory.getLogger(this::class.java)
         
-        fun getDownloadUrlForTesting(os: se.premex.gmai.plugin.utils.OSUtils.OperatingSystem): String {
-            val version = "v0.9.6"
+        fun getDownloadUrlForTesting(os: se.premex.gmai.plugin.utils.OSUtils.OperatingSystem, version: String = "v0.9.6"): String {
             return when (os) {
                 se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.MACOS -> 
                     "https://github.com/ollama/ollama/releases/download/$version/ollama-darwin.tgz"

@@ -42,4 +42,9 @@ open class OllamaConfiguration @Inject constructor() {
      * Allow automatic port change when port conflicts occur (Phase 3 feature)
      */
     var allowPortChange: Boolean = true
+
+    /**
+     * Version of Ollama to download when using binary download installation
+     */
+    var version: String = "v0.9.6"
 }

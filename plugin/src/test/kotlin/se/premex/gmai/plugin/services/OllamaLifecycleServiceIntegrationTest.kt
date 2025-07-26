@@ -35,8 +35,9 @@ class OllamaLifecycleServiceIntegrationTest {
         assertNotNull(installMethod, "installViaBinaryDownload method should exist")
         
         // Verify method signature
-        assertTrue(installMethod!!.parameterCount == 1, "Method should have 1 parameter")
-        assertTrue(installMethod.parameterTypes[0] == String::class.java, "Parameter should be String")
+        assertTrue(installMethod!!.parameterCount == 2, "Method should have 2 parameters")
+        assertTrue(installMethod.parameterTypes[0] == String::class.java, "First parameter should be String (targetPath)")
+        assertTrue(installMethod.parameterTypes[1] == String::class.java, "Second parameter should be String (version)")
         
         // Verify return type
         val returnType = installMethod.returnType
