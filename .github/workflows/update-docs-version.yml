@@ -1,0 +1,75 @@
+name: Update Documentation Version
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from release
+        id: version
+        run: |
+          VERSION=${{ github.event.release.tag_name }}
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version extracted: $VERSION"
+
+      - name: Update version in documentation files
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          echo "Updating documentation files with version: $VERSION"
+          
+          # List of files to update
+          FILES=(
+            "README.md"
+            "index.md"
+            "getting-started.md"
+            "examples.md"
+            "advanced-features.md"
+          )
+          
+          # Update each file
+          for file in "${FILES[@]}"; do
+            if [ -f "$file" ]; then
+              echo "Updating $file..."
+              # Replace version in plugin declarations
+              sed -i "s/id(\"se\.premex\.gmai\") version \"[^\"]*\"/id(\"se.premex.gmai\") version \"$VERSION\"/g" "$file"
+              echo "Updated $file"
+            else
+              echo "File $file not found, skipping..."
+            fi
+          done
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "No changes detected"
+            echo "HAS_CHANGES=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changes detected"
+            echo "HAS_CHANGES=true" >> $GITHUB_OUTPUT
+            git diff --name-only
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.HAS_CHANGES == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "docs: update version references to $VERSION"
+          git push
