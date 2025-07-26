@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Extract version from release
         id: version
@@ -76,6 +77,9 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          
+          # Switch to main branch to avoid detached HEAD
+          git checkout main
           git add .
           git commit -m "docs: update version references to $VERSION"
-          git push
+          git push origin main
