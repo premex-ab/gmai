@@ -39,23 +39,11 @@ jobs:
 
       - name: Run full plugin check
         shell: bash
-        run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # On Windows, use cmd to avoid batch file termination prompts
-            ./gradlew.bat :plugin:check --no-daemon --console=plain
-          else
-            ./gradlew :plugin:check
-          fi
+        run: ./gradlew :plugin:check
 
       - name: Build plugin
         shell: bash
-        run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # On Windows, use cmd to avoid batch file termination prompts
-            ./gradlew.bat :plugin:build --no-daemon --console=plain
-          else
-            ./gradlew :plugin:build
-          fi
+        run: ./gradlew :plugin:build
 
       - name: Upload reports
         uses: actions/upload-artifact@v4
