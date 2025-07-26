@@ -66,7 +66,7 @@ managedAi {
 ```kotlin
 // build.gradle.kts
 plugins {
-    id("se.premex.gmai") version "0.0.1"
+    id("se.premex.gmai") version "0.0.2"
 }
 
 managedAi {

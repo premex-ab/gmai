@@ -16,7 +16,7 @@ This page provides practical examples of using GMAI in real-world scenarios.
 // build.gradle.kts
 plugins {
     kotlin("jvm")
-    id("se.premex.gmai") version "0.0.1"
+    id("se.premex.gmai") version "0.0.2"
 }
 
 repositories {
@@ -109,7 +109,7 @@ class AiTest {
 // build.gradle.kts
 plugins {
     kotlin("jvm")
-    id("se.premex.gmai") version "0.0.1"
+    id("se.premex.gmai") version "0.0.2"
 }
 
 managedAi {
@@ -365,7 +365,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.spring")
     id("org.springframework.boot")
-    id("se.premex.gmai") version "0.0.1"
+    id("se.premex.gmai") version "0.0.2"
 }
 
 dependencies {
@@ -407,7 +407,7 @@ class AiIntegrationTest {
 plugins {
     id("com.android.application")
     kotlin("android")
-    id("se.premex.gmai") version "0.0.1"
+    id("se.premex.gmai") version "0.0.2"
 }
 
 managedAi {

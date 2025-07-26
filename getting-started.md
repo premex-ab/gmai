@@ -16,7 +16,7 @@ Add the GMAI plugin to your `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    id("se.premex.gmai") version "0.0.1"
+    id("se.premex.gmai") version "0.0.2"
 }
 ```
 
@@ -165,7 +165,7 @@ Here's a complete example of a project using GMAI:
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "1.9.0"
-    id("se.premex.gmai") version "0.0.1"
+    id("se.premex.gmai") version "0.0.2"
 }
 
 repositories {
