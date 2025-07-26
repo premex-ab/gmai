@@ -35,8 +35,8 @@ jobs:
         if: github.event_name == 'release'
         run: |
           VERSION=${{ github.event.release.tag_name }}
-          # Remove 'v' or 'V' prefix if present
-          VERSION=${VERSION#[Vv]}
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: Set version from input
@@ -46,7 +46,7 @@ jobs:
 
       - name: Update version in build.gradle.kts
         run: |
-          sed -i 's/version = "[^"]*"/version = "'"$VERSION"'"/' plugin/build.gradle.kts
+          sed -i "s/version = \".*\"/version = \"$VERSION\"/" plugin/build.gradle.kts
 
       - name: Validate plugin
         run: ./gradlew :plugin:validatePlugins
