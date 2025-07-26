@@ -128,6 +128,17 @@ To test the plugin locally:
 ./gradlew :plugin:check
 ```
 
+## Community & Support
+
+[![GitHub stars](https://img.shields.io/github/stars/premex-ab/gmai?style=social)](https://github.com/premex-ab/gmai/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/premex-ab/gmai?style=social)](https://github.com/premex-ab/gmai/fork)
+[![GitHub issues](https://img.shields.io/github/issues/premex-ab/gmai)](https://github.com/premex-ab/gmai/issues)
+
+- **⭐ [Star this repository](https://github.com/premex-ab/gmai)** if you find GMAI useful
+- **🍴 [Fork the repository](https://github.com/premex-ab/gmai/fork)** to contribute or customize
+- **🐛 [Report issues](https://github.com/premex-ab/gmai/issues)** for bugs or feature requests
+- **📖 [Read the documentation](https://gmai.premex.se/)** for comprehensive guides
+
 ## Product by Premex
 
 GMAI is developed and maintained by [Premex](https://premex.se), a company specializing in innovative software solutions.

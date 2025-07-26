@@ -9,6 +9,14 @@ title: "GMAI"
 
 GMAI (Gradle Managed AI) is a Gradle plugin that seamlessly integrates AI capabilities into your build process by automatically managing Ollama instances. It handles the entire lifecycle of AI services - from installation and startup to model management and cleanup - so you can focus on using AI in your tasks.
 
+## 🚀 GitHub Repository
+
+[![View on GitHub](https://img.shields.io/badge/View%20on-GitHub-blue?style=for-the-badge&logo=github)](https://github.com/premex-ab/gmai)
+[![Stars](https://img.shields.io/github/stars/premex-ab/gmai?style=for-the-badge)](https://github.com/premex-ab/gmai/stargazers)
+[![Fork](https://img.shields.io/github/forks/premex-ab/gmai?style=for-the-badge)](https://github.com/premex-ab/gmai/fork)
+
+**👆 Star, fork, or contribute to GMAI on GitHub! Found an issue? [Report it here](https://github.com/premex-ab/gmai/issues)**
+
 ## What GMAI Does
 
 - **Automatic Ollama Management**: Installs, starts, and stops Ollama automatically based on your build needs
@@ -106,6 +114,19 @@ GMAI provides several built-in tasks for managing AI services:
 - `ollamaStatus` - Check Ollama status and list available models
 - `pullModel{ModelName}` - Pull specific models (auto-generated for each configured model)
 
+## Community & Support
+
+**Love GMAI? Help us grow the community!**
+
+[![GitHub stars](https://img.shields.io/github/stars/premex-ab/gmai?style=social)](https://github.com/premex-ab/gmai/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/premex-ab/gmai?style=social)](https://github.com/premex-ab/gmai/fork)
+[![GitHub issues](https://img.shields.io/github/issues/premex-ab/gmai)](https://github.com/premex-ab/gmai/issues)
+
+- **⭐ [Star us on GitHub](https://github.com/premex-ab/gmai)** - Show your support and help others discover GMAI
+- **🍴 [Fork the repository](https://github.com/premex-ab/gmai/fork)** - Contribute to the project or create your own version
+- **🐛 [Report issues](https://github.com/premex-ab/gmai/issues)** - Found a bug or have a feature request? Let us know!
+- **💬 [View the source code](https://github.com/premex-ab/gmai)** - Explore the implementation and contribute
+
 ## Product by Premex
 
 GMAI is developed and maintained by [Premex](https://premex.se), a company specializing in innovative software solutions.
@@ -114,3 +135,4 @@ GMAI is developed and maintained by [Premex](https://premex.se), a company speci
 
 [Get Started →](getting-started.md){: .btn .btn-primary}
 [View Examples →](examples.md){: .btn .btn-outline}
+[⭐ Star on GitHub →](https://github.com/premex-ab/gmai){: .btn .btn-outline}

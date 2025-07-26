@@ -25,6 +25,10 @@ header_pages:
 
 # Social links
 github_username: premex-ab
+repository: premex-ab/gmai
+github:
+  repository_url: https://github.com/premex-ab/gmai
+  issues_url: https://github.com/premex-ab/gmai/issues
 company_name: Premex
 company_url: https://premex.se
 
