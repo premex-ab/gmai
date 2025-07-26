@@ -46,7 +46,11 @@ jobs:
 
       - name: Update version in build.gradle.kts
         run: |
-          sed -i 's/version = "[^"]*"/version = "'"$VERSION"'"/' plugin/build.gradle.kts
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' 's/version = "[^"]*"/version = "'"$VERSION"'"/' plugin/build.gradle.kts
+          else
+            sed -i 's/version = "[^"]*"/version = "'"$VERSION"'"/' plugin/build.gradle.kts
+          fi
 
       - name: Validate plugin
         run: ./gradlew :plugin:validatePlugins
