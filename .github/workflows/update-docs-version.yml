@@ -21,8 +21,8 @@ jobs:
         id: version
         run: |
           VERSION=${{ github.event.release.tag_name }}
-          # Remove 'v' prefix if present
-          VERSION=${VERSION#v}
+          # Remove 'v' or 'V' prefix if present
+          VERSION=${VERSION#[Vv]}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Version extracted: $VERSION"
 
