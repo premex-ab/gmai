@@ -31,6 +31,12 @@ jobs:
           VERSION="${{ steps.version.outputs.VERSION }}"
           echo "Updating documentation files with version: $VERSION"
           
+          # Validate version format
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z-]+)*$ ]]; then
+            echo "Invalid version format: $VERSION"
+            exit 1
+          fi
+          
           # List of files to update
           FILES=(
             "README.md"
