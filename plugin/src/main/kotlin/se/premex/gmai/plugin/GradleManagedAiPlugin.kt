@@ -138,6 +138,7 @@ class GradleManagedAiPlugin : Plugin<Project> {
             spec.parameters.host.set(extension.ollama.host)
             spec.parameters.port.set(extension.ollama.port)
             spec.parameters.installationStrategy.set(extension.ollama.installationStrategy)
+            spec.parameters.version.set(extension.ollama.version)
             extension.ollama.installPath?.let { spec.parameters.installPath.set(it) }
         }
 

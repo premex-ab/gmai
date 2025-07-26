@@ -23,6 +23,7 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
         val port: Property<Int>
         val installationStrategy: Property<OllamaInstallationStrategy>
         val installPath: Property<String>
+        val version: Property<String>
     }
 
     private val logger = LoggerFactory.getLogger(OllamaLifecycleService::class.java)
@@ -52,7 +53,8 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
         logger.info("Ollama not found, attempting auto-install...")
         val result = installer.findOrInstallOllama(
             strategy = parameters.installationStrategy.getOrElse(OllamaInstallationStrategy.PREFER_EXISTING),
-            isolatedPath = parameters.installPath.orNull
+            isolatedPath = parameters.installPath.orNull,
+            version = parameters.version.get()
         )
 
         if (result.success) {
@@ -134,7 +136,7 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
                 }
         }
 
-        fun findOrInstallOllama(strategy: OllamaInstallationStrategy, isolatedPath: String?): InstallResult {
+        fun findOrInstallOllama(strategy: OllamaInstallationStrategy, isolatedPath: String?, version: String): InstallResult {
             val existing = findOllamaExecutable()
             if (existing != null) {
                 return InstallResult(true, "Ollama already installed at: $existing")
@@ -143,19 +145,19 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
             return when (strategy) {
                 OllamaInstallationStrategy.PREFER_EXISTING -> {
                     // Already checked for existing above, so try isolated download
-                    installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama")
+                    installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama", version)
                 }
                 OllamaInstallationStrategy.PREFER_EXISTING_THEN_SYSTEM_WIDE -> {
                     // Try system package manager first, then isolated
                     val systemResult = installViaPackageManager()
-                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath)
+                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath, version)
                 }
-                OllamaInstallationStrategy.ISOLATED_ONLY -> installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama")
+                OllamaInstallationStrategy.ISOLATED_ONLY -> installViaBinaryDownload(isolatedPath ?: System.getProperty("user.home") + "/.gradle/ollama", version)
                 OllamaInstallationStrategy.SYSTEM_WIDE_ONLY -> installViaPackageManager()
                 OllamaInstallationStrategy.FULL_PRIORITY -> {
                     // Try system package manager, then isolated download
                     val systemResult = installViaPackageManager()
-                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath)
+                    if (systemResult.success) systemResult else installViaBinaryDownload(isolatedPath, version)
                 }
             }
         }
@@ -192,8 +194,184 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
             }
         }
 
-        private fun installViaBinaryDownload(targetPath: String?): InstallResult {
-            return InstallResult(false, "Binary download installation not yet implemented")
+        private fun installViaBinaryDownload(targetPath: String?, version: String): InstallResult {
+            return try {
+                val os = se.premex.gmai.plugin.utils.OSUtils.getOperatingSystem()
+                val installPath = targetPath ?: getDefaultInstallPath(os)
+                
+                logger.info("Starting binary download installation to: $installPath")
+                
+                // Create target directory
+                val targetFile = java.io.File(installPath)
+                targetFile.parentFile?.mkdirs()
+                
+                // Get platform-specific download URL
+                val downloadUrl = getDownloadUrl(os, version)
+                logger.info("Downloading Ollama from: $downloadUrl")
+                
+                // Download and extract
+                val success = downloadAndExtract(downloadUrl, targetFile, os)
+                
+                if (success) {
+                    InstallResult(true, "Ollama installed successfully at: $installPath")
+                } else {
+                    InstallResult(false, "Failed to download and install Ollama")
+                }
+            } catch (e: Exception) {
+                logger.error("Binary download installation failed", e)
+                InstallResult(false, "Binary download installation failed: ${e.message}")
+            }
+        }
+        
+        private fun getDefaultInstallPath(os: se.premex.gmai.plugin.utils.OSUtils.OperatingSystem): String {
+            return when (os) {
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.MACOS -> 
+                    System.getProperty("user.home") + "/.gradle/ollama/bin/ollama"
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.LINUX -> 
+                    System.getProperty("user.home") + "/.gradle/ollama/bin/ollama"
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.WINDOWS -> 
+                    System.getProperty("user.home") + "/.gradle/ollama/bin/ollama.exe"
+            }
+        }
+        
+        private fun getDownloadUrl(os: se.premex.gmai.plugin.utils.OSUtils.OperatingSystem, version: String): String {
+            return when (os) {
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.MACOS -> 
+                    "https://github.com/ollama/ollama/releases/download/$version/ollama-darwin.tgz"
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.LINUX -> 
+                    "https://github.com/ollama/ollama/releases/download/$version/ollama-linux-amd64.tgz"
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.WINDOWS -> 
+                    "https://github.com/ollama/ollama/releases/download/$version/ollama-windows-amd64.zip"
+            }
+        }
+        
+        private fun downloadAndExtract(
+            downloadUrl: String, 
+            targetFile: java.io.File, 
+            os: se.premex.gmai.plugin.utils.OSUtils.OperatingSystem
+        ): Boolean {
+            return try {
+                // Create temporary file for download
+                val isWindows = os == se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.WINDOWS
+                val tempFile = java.io.File.createTempFile(
+                    "ollama-download", 
+                    if (isWindows) ".zip" else ".tgz"
+                )
+                
+                try {
+                    // Download the file
+                    downloadFile(downloadUrl, tempFile)
+                    logger.info("Download completed, extracting to: ${targetFile.absolutePath}")
+                    
+                    // Extract based on platform
+                    if (isWindows) {
+                        extractZip(tempFile, targetFile)
+                    } else {
+                        extractTarGz(tempFile, targetFile)
+                    }
+                } finally {
+                    // Clean up temporary file
+                    tempFile.delete()
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to download and extract Ollama", e)
+                false
+            }
+        }
+        
+        private fun downloadFile(url: String, targetFile: java.io.File) {
+            java.net.URL(url).openStream().use { input ->
+                java.nio.file.Files.copy(
+                    input, 
+                    targetFile.toPath(), 
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                )
+            }
+        }
+        
+        private fun extractTarGz(archiveFile: java.io.File, targetFile: java.io.File): Boolean {
+            return try {
+                // Use tar command for extraction on Unix-like systems
+                val processBuilder = ProcessBuilder(
+                    "tar", "-xzf", archiveFile.absolutePath, "-C", targetFile.parent
+                )
+                processBuilder.directory(targetFile.parentFile)
+                
+                val process = processBuilder.start()
+                val finished = process.waitFor(60, TimeUnit.SECONDS)
+                
+                if (finished && process.exitValue() == 0) {
+                    // Look for the extracted ollama executable
+                    val extractedFile = findExtractedExecutable(targetFile.parentFile, "ollama")
+                    if (extractedFile != null && extractedFile.exists()) {
+                        // Move to target location and make executable
+                        extractedFile.renameTo(targetFile)
+                        targetFile.setExecutable(true)
+                        true
+                    } else {
+                        logger.error("Ollama executable not found after extraction")
+                        false
+                    }
+                } else {
+                    if (!finished) process.destroyForcibly()
+                    logger.error("tar extraction failed")
+                    false
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to extract tar.gz archive", e)
+                false
+            }
+        }
+        
+        private fun extractZip(archiveFile: java.io.File, targetFile: java.io.File): Boolean {
+            return try {
+                // Use Java's built-in ZIP support for Windows
+                val extractDir = java.io.File(targetFile.parent, "extract_temp")
+                extractDir.mkdirs()
+                
+                try {
+                    java.util.zip.ZipInputStream(java.io.FileInputStream(archiveFile)).use { zis ->
+                        var entry = zis.nextEntry
+                        while (entry != null) {
+                            val entryFile = java.io.File(extractDir, entry.name)
+                            if (entry.isDirectory) {
+                                entryFile.mkdirs()
+                            } else {
+                                entryFile.parentFile?.mkdirs()
+                                java.io.FileOutputStream(entryFile).use { fos ->
+                                    zis.copyTo(fos)
+                                }
+                            }
+                            zis.closeEntry()
+                            entry = zis.nextEntry
+                        }
+                    }
+                    
+                    // Look for the extracted ollama executable
+                    val extractedFile = findExtractedExecutable(extractDir, "ollama.exe")
+                    if (extractedFile != null && extractedFile.exists()) {
+                        // Move to target location
+                        extractedFile.renameTo(targetFile)
+                        true
+                    } else {
+                        logger.error("Ollama executable not found after ZIP extraction")
+                        false
+                    }
+                } finally {
+                    // Clean up extraction directory
+                    extractDir.deleteRecursively()
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to extract ZIP archive", e)
+                false
+            }
+        }
+        
+        private fun findExtractedExecutable(dir: java.io.File, executableName: String): java.io.File? {
+            return dir.walkTopDown().firstOrNull { file ->
+                file.name == executableName || 
+                (file.name.equals("ollama", ignoreCase = true) && file.canExecute())
+            }
         }
     }
 
