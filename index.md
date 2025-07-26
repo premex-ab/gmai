@@ -5,6 +5,9 @@ title: "GMAI"
 
 # Gradle Managed AI
 
+[![Latest Release](https://img.shields.io/github/v/release/premex-ab/gmai?style=flat-square&logo=github)](https://github.com/premex-ab/gmai/releases/latest)
+[![Gradle Plugin Portal](https://img.shields.io/gradle-plugin-portal/v/se.premex.gmai?style=flat-square&logo=gradle)](https://plugins.gradle.org/plugin/se.premex.gmai)
+
 **A Gradle plugin that automatically manages Ollama LLM instances for your build tasks**
 
 GMAI (Gradle Managed AI) is a Gradle plugin that seamlessly integrates AI capabilities into your build process by automatically managing Ollama instances. It handles the entire lifecycle of AI services - from installation and startup to model management and cleanup - so you can focus on using AI in your tasks.
