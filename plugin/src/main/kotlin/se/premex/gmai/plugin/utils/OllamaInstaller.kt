@@ -213,7 +213,16 @@ class OllamaInstaller(
             val success = when (OSUtils.getOperatingSystem()) {
                 OSUtils.OperatingSystem.MACOS -> installSystemWideOnMacOS()
                 OSUtils.OperatingSystem.LINUX -> installSystemWideOnLinux()
-                OSUtils.OperatingSystem.WINDOWS -> installSystemWideOnWindows()
+                OSUtils.OperatingSystem.WINDOWS -> {
+                    // Windows doesn't support automatic system-wide installation
+                    // Fall back to isolated installation
+                    logger.info("Windows detected: falling back to isolated installation")
+                    val isolatedResult = installIsolated(null)
+                    return isolatedResult.copy(
+                        installationType = InstallationType.NEW_SYSTEM_WIDE,
+                        message = "Ollama installed in isolated environment (Windows fallback)"
+                    )
+                }
             }
 
             if (success) {

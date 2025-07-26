@@ -116,21 +116,45 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
     fun isOllamaRunning(port: Int = 11434): Boolean {
         return try {
             // Check if process is listening on the specific port
-            val process = when (OSUtils.getOperatingSystem()) {
+            when (OSUtils.getOperatingSystem()) {
                 OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
-                    ProcessBuilder("lsof", "-i", ":$port").start()
+                    val process = ProcessBuilder("lsof", "-i", ":$port").start()
+                    val finished = process.waitFor(5, TimeUnit.SECONDS)
+                    finished && process.exitValue() == 0
                 }
                 OSUtils.OperatingSystem.WINDOWS -> {
-                    ProcessBuilder("netstat", "-an").start()
+                    val process = ProcessBuilder("cmd.exe", "/c", "netstat", "-an").start()
+                    val finished = process.waitFor(5, TimeUnit.SECONDS)
+                    if (finished && process.exitValue() == 0) {
+                        val output = process.inputStream.bufferedReader().readText()
+                        output.contains(":$port")
+                    } else {
+                        if (!finished) process.destroyForcibly()
+                        false
+                    }
                 }
             }
-
-            process.waitFor() == 0
         } catch (e: Exception) {
             // Fallback to generic process check
             try {
-                val process = ProcessBuilder("pgrep", "-f", "ollama.*serve").start()
-                process.waitFor() == 0
+                when (OSUtils.getOperatingSystem()) {
+                    OSUtils.OperatingSystem.MACOS, OSUtils.OperatingSystem.LINUX -> {
+                        val process = ProcessBuilder("pgrep", "-f", "ollama.*serve").start()
+                        val finished = process.waitFor(5, TimeUnit.SECONDS)
+                        finished && process.exitValue() == 0
+                    }
+                    OSUtils.OperatingSystem.WINDOWS -> {
+                        val process = ProcessBuilder("cmd.exe", "/c", "tasklist", "/FI", "IMAGENAME eq ollama.exe").start()
+                        val finished = process.waitFor(5, TimeUnit.SECONDS)
+                        if (finished && process.exitValue() == 0) {
+                            val output = process.inputStream.bufferedReader().readText()
+                            output.contains("ollama.exe")
+                        } else {
+                            if (!finished) process.destroyForcibly()
+                            false
+                        }
+                    }
+                }
             } catch (e2: Exception) {
                 false
             }
@@ -144,11 +168,17 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
                     ProcessBuilder("pkill", "-f", "ollama.*serve").start()
                 }
                 OSUtils.OperatingSystem.WINDOWS -> {
-                    ProcessBuilder("taskkill", "/F", "/IM", "ollama.exe").start()
+                    ProcessBuilder("cmd.exe", "/c", "taskkill", "/F", "/IM", "ollama.exe").start()
                 }
             }
 
-            process.waitFor() == 0
+            val finished = process.waitFor(10, TimeUnit.SECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                false
+            } else {
+                process.exitValue() == 0
+            }
         } catch (e: Exception) {
             logger.error("Failed to kill existing Ollama processes", e)
             false
@@ -201,7 +231,8 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
             )
             OSUtils.OperatingSystem.WINDOWS -> listOf(
                 System.getenv("LOCALAPPDATA") + "\\Programs\\Ollama\\ollama.exe",
-                System.getenv("PROGRAMFILES") + "\\Ollama\\ollama.exe"
+                System.getenv("PROGRAMFILES") + "\\Ollama\\ollama.exe",
+                System.getenv("PROGRAMFILES(X86)") + "\\Ollama\\ollama.exe"
             )
         }
 
@@ -214,17 +245,11 @@ class ProcessManager(private val logger: Logger = LoggerFactory.getLogger(Proces
      * Try to find Ollama in system PATH
      */
     private fun findOllamaInPath(): String? {
-        return try {
-            val process = ProcessBuilder("which", "ollama").start()
-            if (process.waitFor() == 0) {
-                process.inputStream.bufferedReader().readText().trim()
-            } else {
+        return OSUtils.findExecutableInPath("ollama")?.takeIf { it.isNotBlank() }
+            ?: run {
+                logger.debug("Could not find ollama in PATH")
                 null
             }
-        } catch (e: Exception) {
-            logger.debug("Could not find ollama in PATH: ${e.message}")
-            null
-        }
     }
 
     enum class OperatingSystem {

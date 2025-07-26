@@ -8,6 +8,7 @@ import se.premex.gmai.plugin.models.OllamaInstallationStrategy
 import se.premex.gmai.plugin.utils.OllamaInstaller
 import se.premex.gmai.plugin.utils.ProcessManager
 import java.io.Serializable
+import java.util.concurrent.TimeUnit
 
 /**
  * Configuration cache compatible build service for managing Ollama lifecycle.
@@ -100,12 +101,23 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
 
         fun findOllamaExecutable(): String? {
             // Check common installation paths
-            val commonPaths = listOf(
-                "/usr/local/bin/ollama",
-                "/usr/bin/ollama",
-                "/opt/homebrew/bin/ollama",
-                System.getProperty("user.home") + "/.local/bin/ollama"
-            )
+            val commonPaths = when (se.premex.gmai.plugin.utils.OSUtils.getOperatingSystem()) {
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.MACOS -> listOf(
+                    "/usr/local/bin/ollama",
+                    "/opt/homebrew/bin/ollama",
+                    System.getProperty("user.home") + "/.local/bin/ollama"
+                )
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.LINUX -> listOf(
+                    "/usr/local/bin/ollama",
+                    "/usr/bin/ollama",
+                    System.getProperty("user.home") + "/.local/bin/ollama"
+                )
+                se.premex.gmai.plugin.utils.OSUtils.OperatingSystem.WINDOWS -> listOf(
+                    System.getenv("LOCALAPPDATA") + "\\Programs\\Ollama\\ollama.exe",
+                    System.getenv("PROGRAMFILES") + "\\Ollama\\ollama.exe",
+                    System.getenv("PROGRAMFILES(X86)") + "\\Ollama\\ollama.exe"
+                )
+            }
 
             for (path in commonPaths) {
                 val file = java.io.File(path)
@@ -114,17 +126,12 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
                 }
             }
 
-            // Check PATH
-            try {
-                val process = ProcessBuilder("which", "ollama").start()
-                if (process.waitFor() == 0) {
-                    return process.inputStream.bufferedReader().readText().trim()
+            // Check PATH using cross-platform method
+            return se.premex.gmai.plugin.utils.OSUtils.findExecutableInPath("ollama")?.takeIf { it.isNotBlank() }
+                ?: run {
+                    logger.debug("Could not find ollama in PATH")
+                    null
                 }
-            } catch (e: Exception) {
-                logger.debug("Could not find ollama in PATH: ${e.message}")
-            }
-
-            return null
         }
 
         fun findOrInstallOllama(strategy: OllamaInstallationStrategy, isolatedPath: String?): InstallResult {
@@ -159,18 +166,22 @@ abstract class OllamaLifecycleService : BuildService<OllamaLifecycleService.Para
                 when {
                     os.contains("mac") -> {
                         val process = ProcessBuilder("brew", "install", "ollama").start()
-                        if (process.waitFor() == 0) {
+                        val finished = process.waitFor(300, TimeUnit.SECONDS)
+                        if (finished && process.exitValue() == 0) {
                             InstallResult(true, "Installed via Homebrew")
                         } else {
+                            if (!finished) process.destroyForcibly()
                             InstallResult(false, "Homebrew installation failed")
                         }
                     }
                     os.contains("linux") -> {
                         // Try curl install script
                         val process = ProcessBuilder("bash", "-c", "curl -fsSL https://ollama.com/install.sh | sh").start()
-                        if (process.waitFor() == 0) {
+                        val finished = process.waitFor(300, TimeUnit.SECONDS)
+                        if (finished && process.exitValue() == 0) {
                             InstallResult(true, "Installed via curl script")
                         } else {
+                            if (!finished) process.destroyForcibly()
                             InstallResult(false, "Curl installation failed")
                         }
                     }

@@ -11,7 +11,12 @@ concurrency:
 
 jobs:
   test:
-    runs-on: [tart]
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
     permissions:
       contents: read
       pull-requests: write
@@ -28,30 +33,23 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-home-cache-cleanup: true
 
       - name: Run full plugin check
+        shell: bash
         run: ./gradlew :plugin:check
 
       - name: Build plugin
+        shell: bash
         run: ./gradlew :plugin:build
 
-      - name: Upload test results
+      - name: Upload reports
         uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
-          name: test-results
+          name: test-results-${{ matrix.os }}
           path: |
-            plugin/build/reports/tests/
-            plugin/build/test-results/
-
-      - name: Upload build reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: build-reports
-          path: |
-            plugin/build/reports/
-            build/reports/
+            **/build/reports/tests/*
+            **/build/test-results/*
