@@ -2,7 +2,7 @@ package se.premex.gmai.plugin.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.DisableCachingByDefault
+import org.gradle.work.DisableCachingByDefault
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import kotlinx.coroutines.runBlocking
