@@ -2,6 +2,7 @@ package se.premex.gmai.plugin.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
+import org.gradle.work.DisableCachingByDefault
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import kotlinx.coroutines.runBlocking
@@ -10,6 +11,7 @@ import se.premex.gmai.plugin.services.OllamaService
 import se.premex.gmai.plugin.utils.ProcessManager
 import java.time.Duration
 
+@DisableCachingByDefault(because = "Checks live Ollama service status and should not be cached")
 abstract class OllamaStatusTask : DefaultTask() {
 
     @get:Input
