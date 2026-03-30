@@ -16,7 +16,7 @@ plugins {
     // Add serialization plugin for JSON handling
     alias(libs.plugins.kotlin.serialization)
 
-    id("com.gradle.plugin-publish") version "1.3.1"
+    id("com.gradle.plugin-publish") version "2.1.1"
 }
 
 group = "se.premex"
