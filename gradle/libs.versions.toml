@@ -3,7 +3,7 @@
 
 [versions]
 kotlin-gradle-plugin = "2.3.20"
-ktor = "3.4.2"
+ktor = "3.4.3"
 kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.10.2"
 slf4j = "2.0.17"
