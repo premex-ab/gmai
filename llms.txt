@@ -1,0 +1,40 @@
+# GMAI - Gradle Managed AI
+
+> A Gradle plugin that automatically manages local Ollama LLM instances for your build tasks — handling installation, lifecycle, and model management so you can integrate AI capabilities into Gradle builds with a single `useManagedAi()` call.
+
+GMAI (Gradle Managed AI) seamlessly integrates AI into Gradle by managing Ollama instances on demand. Tasks can declare a dependency on AI services with `useManagedAi()` — services start before the task runs and stop afterward. Models are declared in the build script and pulled automatically. Installation strategies cover system-wide Ollama installs as well as project-local installs under `.ollama/bin/ollama`, with cross-platform support for macOS, Linux, and Windows.
+
+The plugin ID is `se.premex.gmai`, published on the Gradle Plugin Portal.
+
+## Documentation
+
+- [Overview](https://gmai.premex.se/): Project introduction, key features, quick start, and use cases.
+- [Getting Started](https://gmai.premex.se/getting-started/): Add the plugin, configure your first model, and run an AI-powered Gradle task.
+- [Configuration](https://gmai.premex.se/configuration/): Installation strategies, model configuration, host/port settings, and the full DSL reference.
+- [Advanced Features](https://gmai.premex.se/advanced-features/): Lifecycle control, conditional behavior, multi-task coordination, and CI integration.
+- [API Reference](https://gmai.premex.se/api-reference/): Plugin extensions, task types, and the complete public API surface.
+- [Examples](https://gmai.premex.se/examples/): Real-world usage patterns and recipes for testing, code generation, and CI workflows.
+
+## Tasks
+
+GMAI registers these Gradle tasks once applied:
+
+- `setupManagedAi` — Start Ollama and ensure all configured models are available.
+- `teardownManagedAi` — Stop Ollama and clean up resources.
+- `startOllama` / `stopOllama` — Direct lifecycle control without dependent tasks.
+- `ollamaStatus` — Print Ollama status and list installed models.
+- `pullModel<ModelName>` — Pull a specific configured model (one task auto-generated per declared model).
+
+## Project Info
+
+- [GitHub Repository](https://github.com/premex-ab/gmai): Source code, releases, and issue tracker.
+- [Gradle Plugin Portal](https://plugins.gradle.org/plugin/se.premex.gmai): Published plugin coordinates and version history.
+- [Changelog](https://gmai.premex.se/changelog/): Release notes for each version.
+- [Contributing](https://gmai.premex.se/contributing/): Development setup, build commands, and contribution workflow.
+- [License (MIT)](https://github.com/premex-ab/gmai/blob/main/LICENSE): MIT license text.
+
+## Optional
+
+- [README on GitHub](https://github.com/premex-ab/gmai/blob/main/README.md): Source README, equivalent in content to the site overview.
+- [Issue tracker](https://github.com/premex-ab/gmai/issues): Bug reports and feature requests.
+- [Premex](https://premex.se): Publisher and maintainer of GMAI.
