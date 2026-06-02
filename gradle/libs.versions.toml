@@ -8,7 +8,7 @@ kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.11.0"
 slf4j = "2.0.18"
 kotest = "6.1.11"
-mockk = "1.14.9"
+mockk = "1.14.11"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }
