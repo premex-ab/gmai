@@ -7,7 +7,7 @@ ktor = "3.5.1"
 kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.11.0"
 slf4j = "2.0.18"
-kotest = "6.2.1"
+kotest = "6.2.2"
 mockk = "1.14.11"
 
 [libraries]
