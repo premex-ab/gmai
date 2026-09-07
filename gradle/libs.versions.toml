@@ -6,7 +6,7 @@ kotlin-gradle-plugin = "2.4.10"
 ktor = "3.5.2"
 kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.11.0"
-slf4j = "2.0.18"
+slf4j = "2.0.19"
 kotest = "6.2.4"
 mockk = "1.14.11"
 
